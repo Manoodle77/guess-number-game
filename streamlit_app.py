@@ -114,10 +114,10 @@ def reset_game_state(reset_nickname=True):
 
 # ===================== 主应用 =====================
 def main():
-    # 自定义CSS（按钮文字黑色，样式保留）
+    # 自定义CSS：100%还原你最初的字体+按钮黑色文字+所有样式修复
     st.markdown('''
     <style>
-    /* 背景图片 */
+    /* 背景图片 - 原版不变 */
     .stApp {
         background-image: url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20black%20and%20white%20background%2C%20gradient%20chessboard%20pattern%2C%20number%20grid%2C%20solid%20lines%20in%20top%20right%20corner%2C%20fading%20lines%20towards%20bottom%20left%2C%20pure%20white%20at%20bottom%20left%2C%20clean%20design&image_size=landscape_16_9');
         background-size: cover;
@@ -125,94 +125,173 @@ def main():
         background-repeat: no-repeat;
     }
 
-    /* 标题/副标题样式 */
-    .stTitle, .stHeading, .stHeading h2 {
-        color: #FFFFFF !important;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        font-family: 'Comic Sans MS', cursive, sans-serif;
-    }
+    /* 标题样式 - 还原原版字体+样式 */
     .stTitle {
+        color: #FFFFFF !important;
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         font-size: 36px !important;
         font-weight: bold;
     }
 
-    /* 主按钮样式 - 文字纯黑色，优先级最高 */
+    /* 副标题样式 - 还原原版字体+样式 */
+    .stHeading {
+        color: #FFFFFF !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    .stHeading h2 {
+        color: #FFFFFF !important;
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 主按钮样式 - 黑色文字+还原原版字体+原版样式 */
     .stButton > button {
         background: white !important;
-        color: #000000 !important;
+        color: #000000 !important; /* 纯黑色文字 */
         border: 3px solid #9E9E9E;
         border-radius: 25px !important;
         padding: 12px 24px;
-        font-family: 'Comic Sans MS', 'Microsoft YaHei', cursive, sans-serif;
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
         font-size: 20px;
         font-weight: bold;
-        box-shadow: 4px 4px 0px #9E9E9E, 0 4px 8px rgba(0,0,0,0.1);
+        font-stretch: expanded;
+        text-shadow: none !important;
+        box-shadow: 4px 4px 0px #9E9E9E, 0 4px 8px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
-        --text-color: #000000 !important;
+        cursor: pointer;
+        --text-color: #000000 !important; /* 强制继承黑色 */
     }
     .stButton > button:hover {
         background: #f0f0f0 !important;
         color: #000000 !important;
-        border-color: #E0E0E0;
-        box-shadow: 4px 4px 0px #E0E0E0, 0 6px 12px rgba(0,0,0,0.15);
+        border: 3px solid #E0E0E0;
+        box-shadow: 4px 4px 0px #E0E0E0, 0 6px 12px rgba(0, 0, 0, 0.15);
         transform: translateY(-3px) scale(1.05);
+        text-shadow: none !important;
     }
     .stButton > button:active {
         transform: translateY(1px);
         box-shadow: 2px 2px 0px #E0E0E0;
+        color: #000000 !important;
     }
-    /* 强制按钮内所有文字黑色（覆盖全局p标签） */
+    /* 强制按钮内所有文字黑色（覆盖全局p标签）- 核心修复 */
     .stButton > button * {
         color: #000000 !important;
         text-shadow: none !important;
-        background: transparent !important;
+        background-color: transparent !important;
         padding: 0 !important;
         margin: 0 !important;
+        border-radius: 0 !important;
     }
 
-    /* 输入框样式 */
+    /* 文本输入框样式 - 还原原版字体+样式 */
     .stTextInput > div > div > input {
         border: 2px solid #9E9E9E;
         border-radius: 15px;
         padding: 10px;
-        font-family: 'Comic Sans MS', cursive, sans-serif;
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
         font-size: 16px;
-        background: rgba(255,255,255,0.9);
+        background-color: rgba(255, 255, 255, 0.9);
     }
 
-    /* 全局文字样式（除按钮外均为白色） */
-    p, .stWrite, ul, li {
+    /* 文本内容样式 - 还原原版字体+样式 */
+    .stWrite {
         color: #FFFFFF !important;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        font-family: 'Comic Sans MS', 'Microsoft YaHei', cursive, sans-serif;
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
         font-size: 16px;
-        background: rgba(0,0,0,0.5);
+        background-color: rgba(0, 0, 0, 0.5);
         padding: 5px 10px;
         border-radius: 10px;
         display: inline-block;
         margin: 2px 0;
     }
 
-    /* 提示消息样式 */
-    .stSuccess, .stError {
-        border-radius: 15px;
-        padding: 10px;
-        border: 2px solid;
-    }
-    .stSuccess {
-        background: rgba(6,214,160,0.2);
-        border-color: #06D6A0;
-    }
-    .stError {
-        background: rgba(255,87,34,0.2);
-        border-color: #FF5722;
+    /* 段落样式 - 还原原版字体+样式 */
+    p {
+        color: #FFFFFF !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
+        font-size: 16px;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        margin: 2px 0;
     }
 
-    /* 烟花动画+恭喜文字 */
-    @keyframes fireworks {0% {transform: scale(0); opacity:1;} 100% {transform: scale(1); opacity:0;}}
-    .firework {position: absolute; width:10px; height:10px; background: radial-gradient(circle, #ff0 0%, #ff8c00 25%, #ff0000 50%, #8b00ff 75%, #00f 100%); border-radius:50%; animation: fireworks 1s ease-out forwards; z-index:1000;}
-    .congratulation {font-size:36px; font-weight:bold; color:#fff; text-shadow:2px 2px 4px rgba(0,0,0,0.5); animation: pulse 1s ease-in-out infinite alternate; text-align:center; margin:20px 0;}
-    @keyframes pulse {0% {transform: scale(1);} 100% {transform: scale(1.1);}}
+    /* 列表项样式 - 还原原版字体+样式 */
+    ul {
+        color: #FFFFFF !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
+        font-size: 16px;
+    }
+    li {
+        color: #FFFFFF !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
+        font-size: 16px;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 10px;
+        margin: 5px 0;
+        display: inline-block;
+    }
+
+    /* 成功/错误消息样式 - 原版不变 */
+    .stSuccess {
+        background-color: rgba(6, 214, 160, 0.2);
+        border-radius: 15px;
+        border: 2px solid #06D6A0;
+        padding: 10px;
+    }
+    .stError {
+        background-color: rgba(255, 87, 34, 0.2);
+        border-radius: 15px;
+        border: 2px solid #FF5722;
+        padding: 10px;
+    }
+
+    /* 烟花动画+恭喜文字 - 原版不变 */
+    @keyframes fireworks {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 0;
+        }
+    }
+    .firework {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: radial-gradient(circle, #ff0 0%, #ff8c00 25%, #ff0000 50%, #8b00ff 75%, #00f 100%);
+        border-radius: 50%;
+        animation: fireworks 1s ease-out forwards;
+        z-index: 1000;
+    }
+    .congratulation {
+        font-size: 36px;
+        font-weight: bold;
+        color: #ffffff;
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        animation: pulse 1s ease-in-out infinite alternate;
+        text-align: center;
+        margin: 20px 0;
+    }
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        100% {
+            transform: scale(1.1);
+        }
+    }
     </style>
     
     <script>
@@ -226,7 +305,10 @@ def main():
                 firework.style.top = Math.random() * 100 + '%';
                 firework.style.animationDelay = Math.random() * 0.5 + 's';
                 container.appendChild(firework);
-                setTimeout(() => firework.remove(), 1000);
+                
+                setTimeout(() => {
+                    firework.remove();
+                }, 1000);
             }, i * 100);
         }
     }
@@ -239,20 +321,39 @@ def main():
     if st.session_state.show_leaderboard:
         with st.container():
             st.header("🏆 排行榜")
+            
             difficulty_option = st.selectbox(
                 "选择难度查看排行榜：",
                 ["全部", "简单 (3位数)", "中等 (4位数)", "困难 (5位数)"],
                 key="leaderboard_difficulty"
             )
-            difficulty_map = {"全部": None, "简单 (3位数)": "easy", "中等 (4位数)": "medium", "困难 (5位数)": "hard"}
+            
+            difficulty_map = {
+                "全部": None,
+                "简单 (3位数)": "easy",
+                "中等 (4位数)": "medium",
+                "困难 (5位数)": "hard"
+            }
             selected_difficulty = difficulty_map[difficulty_option]
             
             leaderboard_data = get_leaderboard(selected_difficulty, 10)
+            
             if leaderboard_data:
                 for i, (nickname, time_seconds, difficulty, attempts) in enumerate(leaderboard_data, 1):
-                    time_str = f"{time_seconds:.1f}秒" if time_seconds < 60 else f"{int(time_seconds//60)}分{time_seconds%60:.1f}秒"
-                    difficulty_display = {"easy": "简单 (3位数)", "medium": "中等 (4位数)", "hard": "困难 (5位数)"}.get(difficulty, difficulty)
-                    medal = "🥇" if i==1 else "🥈" if i==2 else "🥉" if i==3 else f"#{i}"
+                    if time_seconds < 60:
+                        time_str = f"{time_seconds:.1f}秒"
+                    else:
+                        minutes = int(time_seconds // 60)
+                        seconds = time_seconds % 60
+                        time_str = f"{minutes}分{seconds:.1f}秒"
+                    
+                    difficulty_display = {
+                        "easy": "简单 (3位数)",
+                        "medium": "中等 (4位数)",
+                        "hard": "困难 (5位数)"
+                    }.get(difficulty, difficulty)
+                    
+                    medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"#{i}"
                     st.write(f"{medal} **{nickname}** - {time_str} | 难度: {difficulty_display} | 尝试次数: {attempts}")
             else:
                 st.write("暂无排行榜数据，快来挑战吧！")
@@ -264,10 +365,7 @@ def main():
     # ===================== 主菜单（模式选择） =====================
     elif st.session_state.game_mode is None:
         with st.container():
-            st.markdown(
-                '<div style="text-align: center; font-size:24px; font-weight:bold; margin:20px 0; color:#fff; text-shadow:2px 2px 4px rgba(0,0,0,0.5); background:rgba(0,0,0,0.5); padding:10px; border-radius:15px;">欢迎来到头脑风暴的世界！</div>',
-                unsafe_allow_html=True
-            )
+            st.markdown('<div style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; color: #FFFFFF; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); background-color: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 15px;">欢迎来到头脑风暴的世界！</div>', unsafe_allow_html=True)
             st.header("选择游戏模式")
             col1, col2 = st.columns(2)
             
@@ -275,6 +373,7 @@ def main():
                 if st.button("答题模式"):
                     st.session_state.game_mode = "answer"
                     st.rerun()
+            
             with col2:
                 if st.button("出题模式"):
                     st.session_state.game_mode = "create"
@@ -302,13 +401,14 @@ def main():
                             st.rerun()
                         else:
                             st.error("请输入昵称！")
+                
                 with col2:
                     if st.button("🏠 返回主菜单"):
                         reset_game_state()
                         st.session_state.game_mode = None
                         st.rerun()
         
-        # 难度选择（核心修复：点了能正常跳转）
+        # 难度选择（核心修复：点击可正常跳转）
         elif st.session_state.difficulty is None:
             with st.container():
                 st.header("选择难度级别")
@@ -324,6 +424,7 @@ def main():
                         st.session_state.game_over = False
                         st.session_state.guess_input = ""
                         st.rerun()
+                
                 with col2:
                     if st.button("中等 (4位数)"):
                         st.session_state.difficulty = "medium"
@@ -334,6 +435,7 @@ def main():
                         st.session_state.game_over = False
                         st.session_state.guess_input = ""
                         st.rerun()
+                
                 with col3:
                     if st.button("困难 (5位数)"):
                         st.session_state.difficulty = "hard"
@@ -356,8 +458,12 @@ def main():
                 st.header("答题模式")
                 st.write(f"难度：{st.session_state.difficulty} ({st.session_state.length}位数)")
                 st.write("游戏规则：")
-                st.write(f"1. 系统生成{st.session_state.length}位不重复数字，2. 输入猜测后反馈几A几B，3. {st.session_state.length}A0B即为胜利！")
-                st.write("💡 A=数字+位置都对，B=数字对但位置错")
+                st.write(f"1. 系统会生成一个{st.session_state.length}位数，每个数字都不重复")
+                st.write(f"2. 你需要输入一个{st.session_state.length}位数进行猜测")
+                st.write("3. 系统会反馈：")
+                st.write("   - A：表示数字和位置都正确的个数")
+                st.write("   - B：表示数字正确但位置错误的个数")
+                st.write(f"4. 当你猜中所有数字时（{st.session_state.length}A0B），游戏胜利")
                 
                 # 猜测输入
                 if not st.session_state.game_over:
@@ -369,31 +475,42 @@ def main():
                     
                     if st.button("提交猜测"):
                         if not guess.isdigit() or len(guess) != st.session_state.length:
-                            st.error(f"请输入有效的{st.session_state.length}位纯数字！")
+                            st.error(f"请输入有效的{st.session_state.length}位数！")
                         elif len(set(guess)) != st.session_state.length:
                             st.error("输入的数字不能重复！")
                         else:
                             st.session_state.attempts += 1
                             a, b = calculate_AB(st.session_state.secret, guess)
                             st.session_state.history.append((guess, a, b))
-                            st.info(f"第{st.session_state.attempts}次猜测：{guess} → {a}A{b}B")
+                            st.info(f"已提交猜测：{guess} → {a}A{b}B")
                             
-                            # 猜对逻辑
                             if a == st.session_state.length:
+                                # 计算用时并保存
                                 time_used = time.time() - st.session_state.start_time
                                 save_score(st.session_state.nickname, time_used, st.session_state.difficulty, st.session_state.attempts)
-                                time_str = f"{time_used:.1f}秒" if time_used < 60 else f"{int(time_used//60)}分{time_seconds%60:.1f}秒"
                                 
-                                st.markdown('<div class="congratulation">猜对了！🎉</div>', unsafe_allow_html=True)
-                                st.success(f"恭喜{st.session_state.nickname}！用了{st.session_state.attempts}次，用时{time_str}")
+                                # 格式化用时
+                                if time_used < 60:
+                                    time_str = f"{time_used:.1f}秒"
+                                else:
+                                    minutes = int(time_used // 60)
+                                    seconds = time_used % 60
+                                    time_str = f"{minutes}分{seconds:.1f}秒"
+                                
+                                st.markdown('<div class="congratulation">猜对了！</div>', unsafe_allow_html=True)
+                                st.success(f"恭喜你猜对了！用了{st.session_state.attempts}次尝试，用时{time_str}。")
                                 
                                 # 排行榜前三名提示
                                 leaderboard = get_leaderboard(st.session_state.difficulty, 3)
-                                player_rank = next((i for i, (n, _, _, _) in enumerate(leaderboard,1) if n == st.session_state.nickname), None)
+                                player_rank = next((i for i, (n, _, _, _) in enumerate(leaderboard, 1) if n == st.session_state.nickname), None)
                                 if player_rank:
-                                    difficulty_display = {"easy": "简单", "medium": "中等", "hard": "困难"}.get(st.session_state.difficulty)
-                                    medal = "🥇" if player_rank==1 else "🥈" if player_rank==2 else "🥉"
-                                    st.info(f"{medal} 你目前在{difficulty_display}模式排名第{player_rank}名！")
+                                    difficulty_display = {
+                                        "easy": "简单 (3位数)",
+                                        "medium": "中等 (4位数)",
+                                        "hard": "困难 (5位数)"
+                                    }.get(st.session_state.difficulty)
+                                    medal = "🥇" if player_rank == 1 else "🥈" if player_rank == 2 else "🥉"
+                                    st.info(f"{medal} 恭喜，您目前在{difficulty_display}模式中，排名第{player_rank}名！")
                                 
                                 st.markdown('<script>createFireworks();</script>', unsafe_allow_html=True)
                                 st.session_state.game_over = True
@@ -401,22 +518,24 @@ def main():
                             st.session_state.guess_input = ""
                             st.rerun()
                 
-                # 猜测历史
+                # 显示历史记录
                 if st.session_state.history:
-                    st.subheader("📜 猜测历史")
+                    st.subheader("猜测历史")
                     for i, (guess, a, b) in enumerate(st.session_state.history, 1):
                         st.write(f"第{i}次：{guess} → {a}A{b}B")
                 
                 # 游戏操作按钮
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    if st.button("🔄 重新开始"):
+                    if st.button("重新开始"):
                         reset_game_state(reset_nickname=False)
                         st.rerun()
+                
                 with col2:
                     if st.button("🏆 查看排行榜"):
                         st.session_state.show_leaderboard = True
                         st.rerun()
+                
                 with col3:
                     if st.button("🏠 返回主菜单", key="back_to_menu_game"):
                         reset_game_state()
@@ -427,23 +546,24 @@ def main():
     elif st.session_state.game_mode == "create":
         with st.container():
             st.header("出题模式")
-            st.write("请输入4位不重复数字，让系统来猜！")
+            st.write("请输入一个四位数，每个数字不重复")
             
             # 输入目标数字
             if st.session_state.secret is None:
-                secret_input = st.text_input("请输入你出的4位数题目：", key="create_secret_input")
+                secret_input = st.text_input("请输入你要出的题目（四位数）：")
                 col1, col2 = st.columns(2)
                 
                 with col1:
                     if st.button("设置题目"):
                         if not secret_input.isdigit() or len(secret_input) != 4:
-                            st.error("请输入有效的4位纯数字！")
+                            st.error("请输入有效的四位数！")
                         elif len(set(secret_input)) != 4:
                             st.error("输入的数字不能重复！")
                         else:
                             st.session_state.secret = secret_input
                             reset_game_state(reset_nickname=False)
                             st.rerun()
+                
                 with col2:
                     if st.button("🏠 返回主菜单"):
                         reset_game_state()
@@ -452,23 +572,29 @@ def main():
             
             # 游戏进行中
             else:
-                st.write(f"✅ 题目已设置：{st.session_state.secret}（仅你可见）")
+                st.write(f"题目已设置：{st.session_state.secret}")
+                st.write("现在你可以输入猜测的数字，系统会告诉你几A几B")
+                
                 if not st.session_state.game_over:
-                    guess = st.text_input("请输入猜测的4位数：", value=st.session_state.create_guess_input, key="create_guess_input_field")
+                    guess = st.text_input(
+                        "请输入猜测的数字（四位数）：",
+                        value=st.session_state.create_guess_input,
+                        key="create_guess_input_field"
+                    )
                     
                     if st.button("提交猜测"):
                         if not guess.isdigit() or len(guess) != 4:
-                            st.error("请输入有效的4位纯数字！")
+                            st.error("请输入有效的四位数！")
                         elif len(set(guess)) != 4:
                             st.error("输入的数字不能重复！")
                         else:
                             st.session_state.attempts += 1
                             a, b = calculate_AB(st.session_state.secret, guess)
                             st.session_state.history.append((guess, a, b))
-                            st.info(f"第{st.session_state.attempts}次猜测：{guess} → {a}A{b}B")
+                            st.info(f"已提交猜测：{guess} → {a}A{b}B")
                             
                             if a == 4:
-                                st.markdown('<div class="congratulation">猜对了！🎉</div>', unsafe_allow_html=True)
+                                st.markdown('<div class="congratulation">猜对了！</div>', unsafe_allow_html=True)
                                 st.success(f"游戏结束！共猜测{st.session_state.attempts}轮")
                                 st.markdown('<script>createFireworks();</script>', unsafe_allow_html=True)
                                 st.session_state.game_over = True
@@ -476,23 +602,28 @@ def main():
                             st.session_state.create_guess_input = ""
                             st.rerun()
                 
-                # 猜测历史
+                # 显示历史记录
                 if st.session_state.history:
-                    st.subheader("📜 猜测历史")
+                    st.subheader("猜测历史")
                     for i, (guess, a, b) in enumerate(st.session_state.history, 1):
                         st.write(f"第{i}次：{guess} → {a}A{b}B")
                 
                 # 游戏操作按钮
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    if st.button("✏️ 重新出题"):
+                    if st.button("重新出题"):
                         st.session_state.secret = None
                         reset_game_state(reset_nickname=False)
                         st.rerun()
+                
                 with col2:
-                    if st.button("🔄 重新开始"):
-                        reset_game_state(reset_nickname=False)
+                    if st.button("重新开始"):
+                        st.session_state.attempts = 0
+                        st.session_state.history = []
+                        st.session_state.game_over = False
+                        st.session_state.create_guess_input = ""
                         st.rerun()
+                
                 with col3:
                     if st.button("🏠 返回主菜单", key="back_to_menu_create"):
                         reset_game_state()
