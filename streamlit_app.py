@@ -384,7 +384,7 @@ def main():
                 st.session_state.show_leaderboard = True
                 st.rerun()
     
-    # ===================== 答题模式 =====================
+    # ===================== 答题模式（3/4/5位数都修复） =====================
     elif st.session_state.game_mode == "answer":
         # 昵称输入
         if st.session_state.nickname == "":
@@ -484,12 +484,13 @@ def main():
                             st.session_state.history.append((guess, a, b))
                             st.info(f"已提交猜测：{guess} → {a}A{b}B")
                             
+                            # 猜中逻辑（无st.rerun，不刷新）
                             if a == st.session_state.length:
-                                # 计算用时并保存（核心修复：变量名正确）
+                                # 计算用时并保存
                                 time_used = time.time() - st.session_state.start_time
                                 save_score(st.session_state.nickname, time_used, st.session_state.difficulty, st.session_state.attempts)
                                 
-                                # 格式化用时（修复：用time_used而非time_seconds）
+                                # 格式化用时
                                 if time_used < 60:
                                     time_str = f"{time_used:.1f}秒"
                                 else:
@@ -497,11 +498,9 @@ def main():
                                     seconds = time_used % 60
                                     time_str = f"{minutes}分{seconds:.1f}秒"
                                 
-                                # 显示恭喜文字（确保unsafe_allow_html=True）
+                                # 显示恭喜文字+烟花+排行榜排名
                                 st.markdown('<div class="congratulation">猜对了！</div>', unsafe_allow_html=True)
                                 st.success(f"恭喜你猜对了！用了{st.session_state.attempts}次尝试，用时{time_str}。")
-                                
-                                # 排行榜前三名提示（完整保留）
                                 leaderboard = get_leaderboard(st.session_state.difficulty, 3)
                                 player_rank = next((i for i, (n, _, _, _) in enumerate(leaderboard, 1) if n == st.session_state.nickname), None)
                                 if player_rank:
@@ -512,13 +511,12 @@ def main():
                                     }.get(st.session_state.difficulty)
                                     medal = "🥇" if player_rank == 1 else "🥈" if player_rank == 2 else "🥉"
                                     st.info(f"{medal} 恭喜，您目前在{difficulty_display}模式中，排名第{player_rank}名！")
-                                
-                                # 触发烟花特效（确保unsafe_allow_html=True）
                                 st.markdown('<script>createFireworks();</script>', unsafe_allow_html=True)
                                 st.session_state.game_over = True
-                            
-                            st.session_state.guess_input = ""
-                            st.rerun()
+                            # 未猜中（才执行清空+刷新，保证输入框正常）
+                            else:
+                                st.session_state.guess_input = ""
+                                st.rerun()
                 
                 # 显示历史记录
                 if st.session_state.history:
@@ -544,7 +542,7 @@ def main():
                         st.session_state.game_mode = None
                         st.rerun()
     
-    # ===================== 出题模式 =====================
+    # ===================== 出题模式（同步修复特效） =====================
     elif st.session_state.game_mode == "create":
         with st.container():
             st.header("出题模式")
@@ -595,14 +593,16 @@ def main():
                             st.session_state.history.append((guess, a, b))
                             st.info(f"已提交猜测：{guess} → {a}A{b}B")
                             
+                            # 猜中逻辑（无st.rerun，不刷新）
                             if a == 4:
                                 st.markdown('<div class="congratulation">猜对了！</div>', unsafe_allow_html=True)
                                 st.success(f"游戏结束！共猜测{st.session_state.attempts}轮")
                                 st.markdown('<script>createFireworks();</script>', unsafe_allow_html=True)
                                 st.session_state.game_over = True
-                            
-                            st.session_state.create_guess_input = ""
-                            st.rerun()
+                            # 未猜中（才执行清空+刷新）
+                            else:
+                                st.session_state.create_guess_input = ""
+                                st.rerun()
                 
                 # 显示历史记录
                 if st.session_state.history:
@@ -637,6 +637,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n游戏被用户中断，再见！")
-    except Exception as e:
-        print(f"发生错误：{e}")
-        print("游戏异常退出")
+    else:
+        print("游戏正常运行")
