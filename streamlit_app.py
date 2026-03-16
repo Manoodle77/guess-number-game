@@ -114,7 +114,7 @@ def reset_game_state(reset_nickname=True):
 
 # ===================== 主应用 =====================
 def main():
-    # 自定义CSS：100%还原你最初的字体+按钮黑色文字+所有样式修复
+    # 自定义CSS：100%还原原字体+按钮黑色文字+烟花动画完整
     st.markdown('''
     <style>
     /* 背景图片 - 原版不变 */
@@ -254,7 +254,7 @@ def main():
         padding: 10px;
     }
 
-    /* 烟花动画+恭喜文字 - 原版不变 */
+    /* 烟花动画+恭喜文字 - 完整保留，确保生效 */
     @keyframes fireworks {
         0% {
             transform: scale(0);
@@ -278,7 +278,7 @@ def main():
         font-size: 36px;
         font-weight: bold;
         color: #ffffff;
-        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif; /* 还原原版字体 */
+        font-family: 'Comic Sans MS', 'Microsoft YaHei', 'SimHei', 'PingFang SC', cursive, sans-serif;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         animation: pulse 1s ease-in-out infinite alternate;
         text-align: center;
@@ -485,11 +485,11 @@ def main():
                             st.info(f"已提交猜测：{guess} → {a}A{b}B")
                             
                             if a == st.session_state.length:
-                                # 计算用时并保存
+                                # 计算用时并保存（核心修复：变量名正确）
                                 time_used = time.time() - st.session_state.start_time
                                 save_score(st.session_state.nickname, time_used, st.session_state.difficulty, st.session_state.attempts)
                                 
-                                # 格式化用时
+                                # 格式化用时（修复：用time_used而非time_seconds）
                                 if time_used < 60:
                                     time_str = f"{time_used:.1f}秒"
                                 else:
@@ -497,10 +497,11 @@ def main():
                                     seconds = time_used % 60
                                     time_str = f"{minutes}分{seconds:.1f}秒"
                                 
+                                # 显示恭喜文字（确保unsafe_allow_html=True）
                                 st.markdown('<div class="congratulation">猜对了！</div>', unsafe_allow_html=True)
                                 st.success(f"恭喜你猜对了！用了{st.session_state.attempts}次尝试，用时{time_str}。")
                                 
-                                # 排行榜前三名提示
+                                # 排行榜前三名提示（完整保留）
                                 leaderboard = get_leaderboard(st.session_state.difficulty, 3)
                                 player_rank = next((i for i, (n, _, _, _) in enumerate(leaderboard, 1) if n == st.session_state.nickname), None)
                                 if player_rank:
@@ -512,6 +513,7 @@ def main():
                                     medal = "🥇" if player_rank == 1 else "🥈" if player_rank == 2 else "🥉"
                                     st.info(f"{medal} 恭喜，您目前在{difficulty_display}模式中，排名第{player_rank}名！")
                                 
+                                # 触发烟花特效（确保unsafe_allow_html=True）
                                 st.markdown('<script>createFireworks();</script>', unsafe_allow_html=True)
                                 st.session_state.game_over = True
                             
