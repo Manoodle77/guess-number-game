@@ -357,7 +357,7 @@ def main():
                 st.write(f"4. 当你猜中所有数字时（{st.session_state.length}A0B），游戏胜利")
                 
                 # 调试信息（可选保留）
-                st.write(f"调试信息：生成的数字是 {st.session_state.secret}")
+                # st.write(f"调试信息：生成的数字是 {st.session_state.secret}")
                 
                 # 猜测输入（游戏未结束时）
                 if not st.session_state.game_over:
