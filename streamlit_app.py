@@ -3,6 +3,7 @@ import random
 import time
 import sqlite3
 import os
+import datetime
 
 # ===================== 数据库初始化 =====================
 DB_FILE = "game_scores.db"
@@ -11,6 +12,8 @@ def init_database():
     """初始化数据库，创建成绩表"""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+    
+    # 创建表（如果不存在）
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS scores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,35 +24,62 @@ def init_database():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # 检查是否存在gave_up字段，如果不存在则添加
+    cursor.execute("PRAGMA table_info(scores)")
+    columns = [column[1] for column in cursor.fetchall()]
+    if 'gave_up' not in columns:
+        cursor.execute("ALTER TABLE scores ADD COLUMN gave_up INTEGER DEFAULT 0")
+    
     conn.commit()
     conn.close()
 
-def save_score(nickname, time_seconds, difficulty, attempts):
+def save_score(nickname, time_seconds, difficulty, attempts, gave_up=0):
     """保存玩家成绩到数据库"""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO scores (nickname, time_seconds, difficulty, attempts) VALUES (?, ?, ?, ?)",
-        (nickname, time_seconds, difficulty, attempts)
+        "INSERT INTO scores (nickname, time_seconds, difficulty, attempts, gave_up) VALUES (?, ?, ?, ?, ?)",
+        (nickname, time_seconds, difficulty, attempts, gave_up)
     )
     conn.commit()
     conn.close()
 
-def get_leaderboard(difficulty=None, limit=10):
-    """获取排行榜数据，按用时排序（时间越短越靠前）"""
+def get_leaderboard(difficulty=None, limit=10, today_only=True):
+    """获取排行榜数据，先按猜测次数由低到高，再按花费时间由低到高"""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
+    # 获取今天的日期（YYYY-MM-DD格式）
+    import datetime
+    today = datetime.date.today().strftime('%Y-%m-%d')
+    
     if difficulty:
-        cursor.execute(
-            "SELECT nickname, time_seconds, difficulty, attempts FROM scores WHERE difficulty = ? ORDER BY time_seconds ASC LIMIT ?",
-            (difficulty, limit)
-        )
+        if today_only:
+            # 只显示今天的数据，且没有弃权
+            cursor.execute(
+                "SELECT nickname, time_seconds, difficulty, attempts FROM scores WHERE difficulty = ? AND date(timestamp) = ? AND gave_up = 0 ORDER BY attempts ASC, time_seconds ASC LIMIT ?",
+                (difficulty, today, limit)
+            )
+        else:
+            # 显示所有数据，且没有弃权
+            cursor.execute(
+                "SELECT nickname, time_seconds, difficulty, attempts FROM scores WHERE difficulty = ? AND gave_up = 0 ORDER BY attempts ASC, time_seconds ASC LIMIT ?",
+                (difficulty, limit)
+            )
     else:
-        cursor.execute(
-            "SELECT nickname, time_seconds, difficulty, attempts FROM scores ORDER BY time_seconds ASC LIMIT ?",
-            (limit,)
-        )
+        if today_only:
+            # 只显示今天的数据，且没有弃权
+            cursor.execute(
+                "SELECT nickname, time_seconds, difficulty, attempts FROM scores WHERE date(timestamp) = ? AND gave_up = 0 ORDER BY attempts ASC, time_seconds ASC LIMIT ?",
+                (today, limit)
+            )
+        else:
+            # 显示所有数据，且没有弃权
+            cursor.execute(
+                "SELECT nickname, time_seconds, difficulty, attempts FROM scores WHERE gave_up = 0 ORDER BY attempts ASC, time_seconds ASC LIMIT ?",
+                (limit,)
+            )
     results = cursor.fetchall()
     conn.close()
     return results
@@ -354,7 +384,7 @@ def main():
                     }.get(difficulty, difficulty)
                     
                     medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"#{i}"
-                    st.write(f"{medal} **{nickname}** - {time_str} | 难度: {difficulty_display} | 尝试次数: {attempts}")
+                    st.write(f"{medal} **{nickname}** - 尝试次数: {attempts} | 难度: {difficulty_display} | {time_str}")
             else:
                 st.write("暂无排行榜数据，快来挑战吧！")
             
@@ -365,7 +395,7 @@ def main():
     # ===================== 主菜单（模式选择） =====================
     elif st.session_state.game_mode is None:
         with st.container():
-            st.markdown('<div style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; color: #FFFFFF; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); background-color: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 15px;">欢迎来到头脑风暴的世界！</div>', unsafe_allow_html=True)
+            st.markdown('<div style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; color: #FFFFFF; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); background-color: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 15px;">欢迎进入数字迷宫！</div>', unsafe_allow_html=True)
             st.header("选择游戏模式")
             col1, col2 = st.columns(2)
             
@@ -501,16 +531,55 @@ def main():
                                 # 显示恭喜文字+烟花+排行榜排名
                                 st.markdown('<div class="congratulation">猜对了！</div>', unsafe_allow_html=True)
                                 st.success(f"恭喜你猜对了！用了{st.session_state.attempts}次尝试，用时{time_str}。")
-                                leaderboard = get_leaderboard(st.session_state.difficulty, 3)
-                                player_rank = next((i for i, (n, _, _, _) in enumerate(leaderboard, 1) if n == st.session_state.nickname), None)
+                                
+                                # 获取本局游戏的排名（只显示今天的数据，包含时间戳）
+                                conn = sqlite3.connect(DB_FILE)
+                                cursor = conn.cursor()
+                                today = datetime.date.today().strftime('%Y-%m-%d')
+                                
+                                # 获取包含时间戳的排行榜数据，按尝试次数和时间排序
+                                cursor.execute(
+                                    "SELECT nickname, time_seconds, difficulty, attempts, timestamp FROM scores WHERE difficulty = ? AND date(timestamp) = ? ORDER BY attempts ASC, time_seconds ASC",
+                                    (st.session_state.difficulty, today)
+                                )
+                                leaderboard_with_time = cursor.fetchall()
+                                conn.close()
+                                
+                                # 查找玩家在排行榜中的位置
+                                player_rank = None
+                                if leaderboard_with_time:
+                                    # 找到本局游戏的记录（相同昵称、尝试次数，且时间最接近当前时间）
+                                    current_time = time.time()
+                                    closest_record = None
+                                    closest_time_diff = float('inf')
+                                    
+                                    for i, (nickname, _, _, attempts, timestamp) in enumerate(leaderboard_with_time, 1):
+                                        if nickname == st.session_state.nickname and attempts == st.session_state.attempts:
+                                            # 计算时间差，找到最接近当前时间的记录（即本局游戏）
+                                            record_time = time.mktime(datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S').timetuple())
+                                            time_diff = abs(record_time - current_time)
+                                            if time_diff < closest_time_diff:
+                                                closest_time_diff = time_diff
+                                                closest_record = i
+                                    
+                                    # 如果找到了本局游戏的记录
+                                    if closest_record:
+                                        player_rank = closest_record
+                                    # 如果没有找到，找该昵称的最佳排名
+                                    else:
+                                        for i, (nickname, _, _, _) in enumerate(leaderboard_with_time, 1):
+                                            if nickname == st.session_state.nickname:
+                                                player_rank = i
+                                                break
+                                
                                 if player_rank:
                                     difficulty_display = {
                                         "easy": "简单 (3位数)",
                                         "medium": "中等 (4位数)",
                                         "hard": "困难 (5位数)"
                                     }.get(st.session_state.difficulty)
-                                    medal = "🥇" if player_rank == 1 else "🥈" if player_rank == 2 else "🥉"
-                                    st.info(f"{medal} 恭喜，您目前在{difficulty_display}模式中，排名第{player_rank}名！")
+                                    medal = "🥇" if player_rank == 1 else "🥈" if player_rank == 2 else "🥉" if player_rank == 3 else f"#{player_rank}"
+                                    st.info(f"{medal} 恭喜，您本局游戏的分数排名第{player_rank}名！")
                                 st.markdown('<script>createFireworks();</script>', unsafe_allow_html=True)
                                 st.session_state.game_over = True
                             # 未猜中（才执行清空+刷新，保证输入框正常）
@@ -525,18 +594,44 @@ def main():
                         st.write(f"第{i}次：{guess} → {a}A{b}B")
                 
                 # 游戏操作按钮
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     if st.button("重新开始"):
-                        reset_game_state(reset_nickname=False)
+                        # 重置游戏状态，重新生成题目，重置时间
+                        st.session_state.attempts = 0
+                        st.session_state.history = []
+                        st.session_state.game_over = False
+                        st.session_state.guess_input = ""
+                        st.session_state.secret = generate_secret(st.session_state.length)
+                        st.session_state.start_time = time.time()
                         st.rerun()
                 
                 with col2:
+                    if st.button("弃权"):
+                        # 计算用时并保存，标记为弃权
+                        time_used = time.time() - st.session_state.start_time
+                        save_score(st.session_state.nickname, time_used, st.session_state.difficulty, st.session_state.attempts, gave_up=1)
+                        
+                        # 格式化用时
+                        if time_used < 60:
+                            time_str = f"{time_used:.1f}秒"
+                        else:
+                            minutes = int(time_used // 60)
+                            seconds = time_used % 60
+                            time_str = f"{minutes}分{seconds:.1f}秒"
+                        
+                        # 显示失败动画和答案
+                        st.markdown('<div style="font-size: 36px; font-weight: bold; color: #ff6b6b; font-family: \'Comic Sans MS\', \'Microsoft YaHei\', cursive, sans-serif; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); animation: pulse 1s ease-in-out infinite alternate; text-align: center; margin: 20px 0;">失败了！</div>', unsafe_allow_html=True)
+                        st.error(f"你选择了弃权！用了{st.session_state.attempts}次尝试，用时{time_str}。")
+                        st.error(f"正确答案是：{st.session_state.secret}")
+                        st.session_state.game_over = True
+                
+                with col3:
                     if st.button("🏆 查看排行榜"):
                         st.session_state.show_leaderboard = True
                         st.rerun()
                 
-                with col3:
+                with col4:
                     if st.button("🏠 返回主菜单", key="back_to_menu_game"):
                         reset_game_state()
                         st.session_state.game_mode = None
