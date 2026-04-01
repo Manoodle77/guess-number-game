@@ -457,6 +457,20 @@ def update_prize_pool(amount):
     conn.commit()
     conn.close()
 
+def get_rich_list():
+    """获取富豪榜数据"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    # 查询所有用户的数字币余额
+    cursor.execute(
+        "SELECT nickname, quantity FROM backpack WHERE item_type = 'currency' AND item_name = '数字币' ORDER BY quantity DESC"
+    )
+    results = cursor.fetchall()
+    conn.close()
+    
+    return results
+
 def settle_daily_prize_pool():
     """每日结算奖池"""
     yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
@@ -1309,6 +1323,17 @@ def main():
             if st.button("🏆 排行榜"):
                 st.session_state.show_leaderboard = True
                 st.rerun()
+            
+            # 富豪榜
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.header("💰 富豪榜")
+            rich_list = get_rich_list()
+            if rich_list:
+                for i, (username, coins) in enumerate(rich_list, 1):
+                    medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"#{i}"
+                    st.write(f"{medal} **{username}** - {coins} 数字币")
+            else:
+                st.write("暂无富豪榜数据，快来积累数字币吧！")
             
             # 后台管理入口（仅管理员可见）
             if st.session_state.username == "admin":
