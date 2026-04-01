@@ -1767,13 +1767,13 @@ def main():
                     current_coins = get_digital_coins(st.session_state.username)
                     st.write(f"当前数字币余额：{current_coins}")
                     
-                    # 输入赌注金额
-                    bet_amount = st.number_input("赌注金额", min_value=1, max_value=current_coins, step=1, key="bet_amount_input")
-                    
                     # 检查数字币是否足够
                     if current_coins < 1:
                         st.error("数字币不足，请前往'逻辑大师'赢取数字币")
                     else:
+                        # 输入赌注金额
+                        bet_amount = st.number_input("赌注金额", min_value=1, max_value=current_coins, step=1, key="bet_amount_input")
+                        
                         st.subheader("请选择")
                         col1, col2, col3 = st.columns(3)
                         with col1:
