@@ -457,6 +457,15 @@ def update_prize_pool(amount):
     conn.commit()
     conn.close()
 
+def convert_to_utc8(timestamp_str):
+    """将UTC时间转换为中国东八区时间"""
+    # 解析UTC时间
+    utc_time = datetime.datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+    # 转换为中国东八区时间
+    utc8_time = utc_time + datetime.timedelta(hours=8)
+    # 返回格式化的时间字符串
+    return utc8_time.strftime('%Y-%m-%d %H:%M:%S')
+
 def get_rich_list():
     """获取富豪榜数据"""
     conn = sqlite3.connect(DB_FILE)
@@ -494,7 +503,7 @@ def settle_daily_prize_pool():
         for difficulty in difficulties:
             # 获取该模式的最佳成绩
             cursor.execute(
-                "SELECT nickname, MIN(attempts), MIN(time_seconds) FROM scores WHERE date(sent_at) = ? AND difficulty = ? AND gave_up = 0 GROUP BY nickname ORDER BY attempts ASC, time_seconds ASC LIMIT 1",
+                "SELECT nickname, attempts, time_seconds FROM scores WHERE date(timestamp) = ? AND difficulty = ? AND gave_up = 0 ORDER BY attempts ASC, time_seconds ASC LIMIT 1",
                 (yesterday, difficulty)
             )
             champion = cursor.fetchone()
@@ -1019,8 +1028,10 @@ def main():
                 for email in emails:
                     email_id, title, content, coins, is_read, is_claimed, sent_at = email
                     
+                    # 转换时间为中国东八区
+                    local_sent_at = convert_to_utc8(sent_at)
                     # 邮件卡片
-                    with st.expander(f"{'📩 ' if not is_read else '📨 '}{title} - {sent_at}"):
+                    with st.expander(f"{'📩 ' if not is_read else '📨 '}{title} - {local_sent_at}"):
                         # 标记为已读
                         if not is_read:
                             mark_email_as_read(email_id)
@@ -1127,8 +1138,10 @@ def main():
                         # 格式化结果
                         result = "已完成" if gave_up == 0 else "已弃权"
                         
+                        # 转换时间为中国东八区
+                        local_timestamp = convert_to_utc8(timestamp)
                         # 显示记录
-                        st.write(f"**时间**: {timestamp} | **玩家**: {nickname} | **游戏模式**: 逻辑大师 | **难度**: {difficulty_display} | **尝试次数**: {attempts} | **用时**: {time_str} | **结果**: {result}")
+                        st.write(f"**时间**: {local_timestamp} | **玩家**: {nickname} | **游戏模式**: 逻辑大师 | **难度**: {difficulty_display} | **尝试次数**: {attempts} | **用时**: {time_str} | **结果**: {result}")
                 else:
                     st.write("暂无游戏历史记录")
             
@@ -1147,8 +1160,10 @@ def main():
                         # 获取用户数字币余额
                         coins = get_digital_coins(username)
                         
+                        # 转换时间为中国东八区
+                        local_created_at = convert_to_utc8(created_at)
                         # 显示用户信息
-                        st.write(f"**账号**: {username} | **密码**: {password} | **创建时间**: {created_at} | **数字币**: {coins}")
+                        st.write(f"**账号**: {username} | **密码**: {password} | **创建时间**: {local_created_at} | **数字币**: {coins}")
                 else:
                     st.write("暂无账号信息")
             
@@ -1168,8 +1183,10 @@ def main():
                         amount_str = f"+{amount}" if amount > 0 else str(amount)
                         change_type = "增加" if amount > 0 else "减少"
                         
+                        # 转换时间为中国东八区
+                        local_timestamp = convert_to_utc8(timestamp)
                         # 显示记录
-                        st.write(f"**时间**: {timestamp} | **账户**: {username} | **变动数量**: {amount_str} | **类型**: {change_type} | **变动原因**: {reason}")
+                        st.write(f"**时间**: {local_timestamp} | **账户**: {username} | **变动数量**: {amount_str} | **类型**: {change_type} | **变动原因**: {reason}")
                 else:
                     st.write("暂无数字币变动记录")
             
@@ -1865,9 +1882,14 @@ def main():
                         st.success(f"恭喜你猜对了！结果是{result}，点数总和为{total}")
                         st.markdown('<script>createFireworks();</script>', unsafe_allow_html=True)
                         
-                        # 给玩家奖励，不扣除赌注
+                        # 给玩家奖励，先扣除赌注再给奖励
                         bet_amount = st.session_state.bet_amount
                         if not st.session_state.bet_deducted:
+                            # 先扣除赌注
+                            update_digital_coins(st.session_state.username, -bet_amount, f"赌狗天堂 - 下注")
+                            # 将赌注添加到奖池
+                            update_prize_pool(bet_amount)
+                            # 然后给奖励
                             if result == "围":
                                 # 猜中围，获得三倍赌注
                                 reward = bet_amount * 3
